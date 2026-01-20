@@ -60,11 +60,13 @@ CLI_TOOLS=(
 )
 
 for tool in "${CLI_TOOLS[@]}"; do
-    if ! command -v "$tool" &> /dev/null; then
-        echo "   Installing $tool..."
-        brew install "$tool"
-    else
+    if command -v "$tool" &> /dev/null; then
         echo "✅ $tool already installed"
+    elif brew list "$tool" &> /dev/null 2>&1; then
+        echo "✅ $tool already installed via brew"
+    else
+        echo "   Installing $tool..."
+        brew install "$tool" || echo "⚠️  Failed to install $tool, continuing..."
     fi
 done
 
@@ -73,7 +75,7 @@ if command -v npm &> /dev/null; then
     echo "✅ npm already installed (bundled with node)"
 else
     echo "⚠️  npm not found - reinstalling node..."
-    brew reinstall node
+    brew reinstall node || echo "⚠️  Failed to reinstall node, continuing..."
 fi
 
 # =============================================================================
@@ -90,11 +92,13 @@ CASK_APPS=(
 )
 
 for app in "${CASK_APPS[@]}"; do
-    if ! brew list --cask "$app" &> /dev/null 2>&1; then
-        echo "   Installing $app..."
-        brew install --cask "$app"
-    else
+    if brew list --cask "$app" &> /dev/null 2>&1; then
         echo "✅ $app already installed"
+    else
+        echo "   Installing $app..."
+        if ! brew install --cask "$app" 2>&1; then
+            echo "⚠️  Failed to install $app (may already be installed outside Homebrew), continuing..."
+        fi
     fi
 done
 
@@ -103,11 +107,11 @@ done
 # =============================================================================
 echo ""
 echo "📦 Checking Claude CLI..."
-if ! command -v claude &> /dev/null; then
-    echo "   Installing Claude CLI..."
-    npm install -g @anthropic-ai/claude-code
-else
+if command -v claude &> /dev/null; then
     echo "✅ Claude CLI already installed"
+else
+    echo "   Installing Claude CLI..."
+    npm install -g @anthropic-ai/claude-code || echo "⚠️  Failed to install Claude CLI, continuing..."
 fi
 
 # =============================================================================
@@ -135,27 +139,27 @@ if [ ! -d "$TEMPLATES_DIR" ]; then
 fi
 
 # Clone ai-rules
-if [ ! -d "$AI_RULES_DIR" ]; then
-    echo "   Cloning ai-rules to $AI_RULES_DIR..."
-    gh repo clone "$ORG/ai-rules" "$AI_RULES_DIR"
-else
+if [ -d "$AI_RULES_DIR" ]; then
     echo "✅ ai-rules already cloned"
+else
+    echo "   Cloning ai-rules to $AI_RULES_DIR..."
+    gh repo clone "$ORG/ai-rules" "$AI_RULES_DIR" || echo "⚠️  Failed to clone ai-rules, continuing..."
 fi
 
 # Clone backend-template
-if [ ! -d "$TEMPLATES_DIR/backend-template" ]; then
-    echo "   Cloning backend-template to $TEMPLATES_DIR/backend-template..."
-    gh repo clone "$ORG/backend-template" "$TEMPLATES_DIR/backend-template"
-else
+if [ -d "$TEMPLATES_DIR/backend-template" ]; then
     echo "✅ backend-template already cloned"
+else
+    echo "   Cloning backend-template to $TEMPLATES_DIR/backend-template..."
+    gh repo clone "$ORG/backend-template" "$TEMPLATES_DIR/backend-template" || echo "⚠️  Failed to clone backend-template, continuing..."
 fi
 
 # Clone frontend-template
-if [ ! -d "$TEMPLATES_DIR/frontend-template" ]; then
-    echo "   Cloning frontend-template to $TEMPLATES_DIR/frontend-template..."
-    gh repo clone "$ORG/frontend-template" "$TEMPLATES_DIR/frontend-template"
-else
+if [ -d "$TEMPLATES_DIR/frontend-template" ]; then
     echo "✅ frontend-template already cloned"
+else
+    echo "   Cloning frontend-template to $TEMPLATES_DIR/frontend-template..."
+    gh repo clone "$ORG/frontend-template" "$TEMPLATES_DIR/frontend-template" || echo "⚠️  Failed to clone frontend-template, continuing..."
 fi
 
 # =============================================================================
@@ -212,8 +216,11 @@ echo "   Created $PLIST_PATH"
 
 # Load the agent
 launchctl unload "$PLIST_PATH" 2>/dev/null || true
-launchctl load "$PLIST_PATH"
-echo "✅ Launchd agent loaded"
+if launchctl load "$PLIST_PATH" 2>/dev/null; then
+    echo "✅ Launchd agent loaded"
+else
+    echo "✅ Launchd agent already loaded or updated"
+fi
 
 # =============================================================================
 # Summary
