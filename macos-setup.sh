@@ -65,11 +65,15 @@ echo "      • Best for Intel Macs with 8-16GB RAM"
 echo "      • Lower resource usage (~35-65 MB vs ~2 GB)"
 echo "      • Better performance on limited hardware"
 echo ""
+echo "  [3] Both"
+echo "      • Install Docker Desktop AND local PostgreSQL/Redis"
+echo "      • Maximum flexibility"
+echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
 while true; do
-    read -p "Enter your choice [1/2]: " choice
+    read -p "Enter your choice [1/2/3]: " choice
     case $choice in
         1)
             SETUP_TYPE="docker"
@@ -83,8 +87,14 @@ while true; do
             echo "✅ Selected: Local setup"
             break
             ;;
+        3)
+            SETUP_TYPE="both"
+            echo ""
+            echo "✅ Selected: Both Docker and Local"
+            break
+            ;;
         *)
-            echo "Please enter 1 or 2"
+            echo "Please enter 1, 2, or 3"
             ;;
     esac
 done
@@ -148,7 +158,9 @@ done
 # Development Environment (Docker or Local)
 # =============================================================================
 echo ""
-if [ "$SETUP_TYPE" = "docker" ]; then
+
+# Install Docker if selected
+if [ "$SETUP_TYPE" = "docker" ] || [ "$SETUP_TYPE" = "both" ]; then
     echo "📦 Setting up Docker environment..."
 
     if brew list --cask docker &> /dev/null 2>&1; then
@@ -163,8 +175,11 @@ if [ "$SETUP_TYPE" = "docker" ]; then
     echo ""
     echo "ℹ️  After setup, start Docker Desktop from Applications"
     echo "   Then use 'npm run docker:up' in your project to start services"
+fi
 
-elif [ "$SETUP_TYPE" = "local" ]; then
+# Install Local services if selected
+if [ "$SETUP_TYPE" = "local" ] || [ "$SETUP_TYPE" = "both" ]; then
+    echo ""
     echo "📦 Setting up local environment..."
 
     # Install PostgreSQL 16
@@ -331,9 +346,10 @@ echo "  • Homebrew"
 echo "  • CLI tools: git, gh, node, npm"
 echo "  • Apps: Sublime Text, Slack, MacDown, Kiro"
 echo "  • Claude CLI"
-if [ "$SETUP_TYPE" = "docker" ]; then
+if [ "$SETUP_TYPE" = "docker" ] || [ "$SETUP_TYPE" = "both" ]; then
     echo "  • Docker Desktop"
-elif [ "$SETUP_TYPE" = "local" ]; then
+fi
+if [ "$SETUP_TYPE" = "local" ] || [ "$SETUP_TYPE" = "both" ]; then
     echo "  • PostgreSQL 16 (running as service)"
     echo "  • Redis (running as service)"
 fi
@@ -356,5 +372,8 @@ if [ "$SETUP_TYPE" = "docker" ]; then
 elif [ "$SETUP_TYPE" = "local" ]; then
     echo "  3. Clone your project and configure .env with local connection strings"
     echo "  4. Run 'npm install && npm run db:push'"
+elif [ "$SETUP_TYPE" = "both" ]; then
+    echo "  3. Start Docker Desktop from Applications (for Docker workflow)"
+    echo "  4. Clone your project and choose Docker or Local in your .env"
 fi
 echo ""
