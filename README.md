@@ -4,6 +4,7 @@ This guide will help you set up your development environment for the prediction-
 
 ## Table of Contents
 
+- [New Mac Bootstrap](#new-mac-bootstrap)
 - [Prerequisites](#prerequisites)
 - [Setup Options](#setup-options)
 - [Docker-First Setup (Recommended)](#docker-first-setup-recommended)
@@ -11,6 +12,35 @@ This guide will help you set up your development environment for the prediction-
 - [Post-Setup Steps](#post-setup-steps)
 - [Common Commands](#common-commands)
 - [Troubleshooting](#troubleshooting)
+
+## New Mac Bootstrap
+
+For a **brand new Mac**, run the bootstrap script first to install all development tools and AI coding assistants:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/development-environment-setup/main/macos-setup.sh | bash
+```
+
+The script will prompt you to choose between **Docker** or **Local** setup:
+
+| Setup | Best For | Installs |
+|-------|----------|----------|
+| **Docker** | Apple Silicon with 16GB+ RAM, Intel with 32GB+ RAM | Docker Desktop |
+| **Local** | Intel Macs with 8-16GB RAM | PostgreSQL 16, Redis |
+
+Both options install:
+
+| Category | Tools |
+|----------|-------|
+| **CLI Tools** | git, gh (GitHub CLI), node, npm |
+| **Applications** | Sublime Text, Slack, MacDown, Kiro |
+| **AI Assistants** | Claude Code (`@anthropic-ai/claude-code`) |
+
+The script is idempotent and can be safely re-run.
+
+After running the bootstrap script, continue with the project-specific setup below.
+
+---
 
 ## Prerequisites
 
