@@ -27,9 +27,23 @@ All options install:
 | **AI Assistants** | Claude Code |
 | **Org Setup** | ai-rules, backend-template, frontend-template |
 
-## Service Control Commands
+## Shell Commands
 
-For Local or Both setups, the script installs shell functions to `~/.dev-services.sh`:
+The script installs shell functions to `~/.dev-services.sh`:
+
+### Project Creation
+
+```bash
+# Create a new backend project from template
+new_backend my-api
+
+# Create a new frontend project from template
+new_frontend my-app
+```
+
+Projects are created as private repos in the `palpito-hunch` org using GitHub's template feature.
+
+### Service Controls
 
 ```bash
 # PostgreSQL

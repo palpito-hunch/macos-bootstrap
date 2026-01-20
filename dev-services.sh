@@ -83,9 +83,54 @@ services_status() {
     redis_status
 }
 
+# Project creation from templates
+new_backend() {
+    local name="$1"
+    if [ -z "$name" ]; then
+        echo "Usage: new_backend <project-name>"
+        echo "Example: new_backend my-api"
+        return 1
+    fi
+
+    echo "Creating new backend project: $name"
+    gh repo create "palpito-hunch/$name" --template palpito-hunch/backend-template --private --clone
+    cd "$name" || return 1
+    echo ""
+    echo "✅ Created $name from backend-template"
+    echo ""
+    echo "Next steps:"
+    echo "  1. npm install"
+    echo "  2. cp .env.example .env"
+    echo "  3. npm run dev"
+}
+
+new_frontend() {
+    local name="$1"
+    if [ -z "$name" ]; then
+        echo "Usage: new_frontend <project-name>"
+        echo "Example: new_frontend my-app"
+        return 1
+    fi
+
+    echo "Creating new frontend project: $name"
+    gh repo create "palpito-hunch/$name" --template palpito-hunch/frontend-template --private --clone
+    cd "$name" || return 1
+    echo ""
+    echo "✅ Created $name from frontend-template"
+    echo ""
+    echo "Next steps:"
+    echo "  1. npm install"
+    echo "  2. cp .env.example .env"
+    echo "  3. npm run dev"
+}
+
 # Help
 services_help() {
-    echo "Development Services Commands:"
+    echo "Development Commands:"
+    echo ""
+    echo "  Project Creation:"
+    echo "    new_backend <name>  - Create backend project from template"
+    echo "    new_frontend <name> - Create frontend project from template"
     echo ""
     echo "  PostgreSQL:"
     echo "    pg_start     - Start PostgreSQL"
