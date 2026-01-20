@@ -284,7 +284,7 @@ if [ "$INSTALL_ALIASES" = true ]; then
     else
         # If running via curl, download the file
         echo "   Downloading dev-services.sh..."
-        curl -fsSL https://raw.githubusercontent.com/palpito-hunch/development-environment-setup/main/dev-services.sh -o "$DEV_SERVICES_DEST" || echo "⚠️  Failed to download dev-services.sh, continuing..."
+        curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/dev-services.sh -o "$DEV_SERVICES_DEST" || echo "⚠️  Failed to download dev-services.sh, continuing..."
     fi
 
     # Add source line to shell config if not present
