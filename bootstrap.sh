@@ -32,5 +32,6 @@ echo "🚀 Running setup script..."
 echo ""
 
 # Run the script with all passed arguments
+# Redirect stdin from /dev/tty so interactive prompts work when piped
 cd "$TEMP_DIR"
-bash macos-setup.sh "$@"
+bash macos-setup.sh "$@" < /dev/tty
