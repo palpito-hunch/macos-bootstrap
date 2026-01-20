@@ -118,8 +118,12 @@ if [ "$INSTALL_SOFTWARE" = true ]; then
     # Read from /dev/tty to work with piped execution
     if [ -t 0 ]; then
         sudo -v
-    else
+    elif [ -e /dev/tty ]; then
         sudo -v < /dev/tty
+    else
+        echo "⚠️  No TTY available - sudo prompts may fail."
+        echo "   If installation fails, run the script directly from a terminal."
+        sudo -v 2>/dev/null || true
     fi
     # Keep sudo alive in background
     while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
@@ -154,7 +158,12 @@ echo "📦 Checking Homebrew..."
 if ! command -v brew &> /dev/null; then
     echo "   Installing Homebrew..."
     # Use /dev/tty for interactive input (Homebrew install script prompts for confirmation)
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" < /dev/tty
+    if [ -e /dev/tty ]; then
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" < /dev/tty
+    else
+        # Non-interactive install (may require NONINTERACTIVE=1 env var)
+        NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    fi
 
     # Add Homebrew to PATH for Apple Silicon Macs
     if [[ $(uname -m) == "arm64" ]]; then
@@ -395,9 +404,14 @@ fi
 echo ""
 echo "📦 Checking GitHub CLI authentication..."
 if ! gh auth status &> /dev/null 2>&1; then
-    echo "   Please authenticate with GitHub:"
-    # Use /dev/tty for interactive input (works with piped execution)
-    gh auth login < /dev/tty
+    if [ -e /dev/tty ]; then
+        echo "   Please authenticate with GitHub:"
+        # Use /dev/tty for interactive input (works with piped execution)
+        gh auth login < /dev/tty
+    else
+        echo "⚠️  GitHub CLI not authenticated and no TTY available."
+        echo "   Run 'gh auth login' manually after setup completes."
+    fi
 else
     echo "✅ GitHub CLI already authenticated"
 fi
