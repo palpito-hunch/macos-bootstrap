@@ -5,28 +5,38 @@ Bootstrap a new macOS machine with development tools and AI coding assistants.
 ## Quick Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash
+# Docker setup (recommended for Apple Silicon 16GB+ or Intel 32GB+)
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash -s -- --docker
+
+# Local setup (recommended for Intel Macs 8-16GB)
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash -s -- --local
+
+# Both Docker and local services
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash -s -- --both
 ```
 
 ## Script Options
 
 | Flag | Short | Description |
 |------|-------|-------------|
-| (none) | | Full install: software + shell commands |
-| `--software` | `-s` | Install/update software only |
+| `--docker` | | Full install with Docker Desktop |
+| `--local` | | Full install with local PostgreSQL/Redis |
+| `--both` | | Full install with Docker + local services |
+| `--software` | `-s` | Install/update software only (interactive) |
 | `--aliases` | `-a` | Update shell commands only |
-| `--all` | | Same as no flags |
+| `--all` | | Same as no flags (interactive) |
 | `--help` | `-h` | Show usage |
 
-```bash
-# Full install (new machine)
-curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash
+**Note:** When running via `curl | bash`, you must specify `--docker`, `--local`, or `--both`. Interactive mode only works when running the script directly.
 
+```bash
 # Update shell commands only (when dev-services.sh changes)
 curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash -s -- --aliases
 
-# Install software only (skip shell config)
-curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash -s -- --software
+# Interactive mode (download and run directly)
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh -o setup.sh
+chmod +x setup.sh
+./setup.sh  # Will prompt for Docker/Local/Both choice
 ```
 
 ## What Gets Installed
@@ -124,5 +134,5 @@ kill -9 <PID>         # Kill process
 curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash -s -- --aliases
 
 # Full re-run (idempotent, safe to repeat)
-curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash -s -- --docker
 ```
