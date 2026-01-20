@@ -204,6 +204,8 @@ cat > "$PLIST_PATH" << EOF
     </array>
     <key>RunAtLoad</key>
     <true/>
+    <key>StartInterval</key>
+    <integer>3600</integer>
     <key>StandardOutPath</key>
     <string>${AI_RULES_DIR}/.git-pull.log</string>
     <key>StandardErrorPath</key>
@@ -243,7 +245,7 @@ echo "  • backend-template -> $TEMPLATES_DIR/backend-template"
 echo "  • frontend-template -> $TEMPLATES_DIR/frontend-template"
 echo ""
 echo "Auto-update:"
-echo "  • ai-rules will auto-update on login"
+echo "  • ai-rules will auto-update on login and every hour"
 echo "  • Logs: $AI_RULES_DIR/.git-pull.log"
 echo ""
 echo "Next steps:"
