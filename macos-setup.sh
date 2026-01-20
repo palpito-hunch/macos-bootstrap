@@ -130,9 +130,9 @@ if [ "$INSTALL_SOFTWARE" = true ]; then
     if [ -t 0 ]; then
         # stdin is a terminal, use it directly
         sudo -v
-    elif [ -c /dev/tty ] && (echo "" > /dev/tty) 2>/dev/null; then
+    elif [ -c /dev/tty ] && (: > /dev/tty) 2>/dev/null; then
         # /dev/tty is usable
-        sudo -v < /dev/tty
+        sudo -v < /dev/tty 2>/dev/null
     else
         # No TTY available - try non-interactive sudo or skip
         echo "⚠️  No TTY available for interactive prompts."
@@ -179,7 +179,7 @@ if ! command -v brew &> /dev/null; then
     # Use /dev/tty for interactive input (Homebrew install script prompts for confirmation)
     if [ -t 0 ]; then
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    elif [ -c /dev/tty ] && (echo "" > /dev/tty) 2>/dev/null; then
+    elif [ -c /dev/tty ] && (: > /dev/tty) 2>/dev/null; then
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" < /dev/tty
     else
         # Non-interactive install
@@ -428,7 +428,7 @@ if ! gh auth status &> /dev/null 2>&1; then
     if [ -t 0 ]; then
         echo "   Please authenticate with GitHub:"
         gh auth login
-    elif [ -c /dev/tty ] && (echo "" > /dev/tty) 2>/dev/null; then
+    elif [ -c /dev/tty ] && (: > /dev/tty) 2>/dev/null; then
         echo "   Please authenticate with GitHub:"
         gh auth login < /dev/tty
     else
