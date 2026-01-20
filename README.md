@@ -20,13 +20,13 @@ curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/
 
 ```bash
 # Full install (new machine)
-curl -fsSL .../macos-setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash
 
 # Update shell commands only (when dev-services.sh changes)
-curl -fsSL .../macos-setup.sh | bash -s -- --aliases
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash -s -- --aliases
 
 # Install software only (skip shell config)
-curl -fsSL .../macos-setup.sh | bash -s -- --software
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash -s -- --software
 ```
 
 ## What Gets Installed
@@ -121,8 +121,8 @@ kill -9 <PID>         # Kill process
 
 ```bash
 # Update shell commands when new features are added
-curl -fsSL .../macos-setup.sh | bash -s -- --aliases
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash -s -- --aliases
 
 # Full re-run (idempotent, safe to repeat)
-curl -fsSL .../macos-setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/macos-bootstrap/main/macos-setup.sh | bash
 ```
