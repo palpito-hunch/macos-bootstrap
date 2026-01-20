@@ -5,7 +5,14 @@ Bootstrap a new macOS machine with development tools and AI coding assistants.
 ## Quick Start
 
 ```bash
+# Full install (software + shell commands)
 curl -fsSL https://raw.githubusercontent.com/palpito-hunch/development-environment-setup/main/macos-setup.sh | bash
+
+# Update only shell commands/aliases
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/development-environment-setup/main/macos-setup.sh | bash -s -- --aliases
+
+# Install only software (no shell commands)
+curl -fsSL https://raw.githubusercontent.com/palpito-hunch/development-environment-setup/main/macos-setup.sh | bash -s -- --software
 ```
 
 ## What It Does

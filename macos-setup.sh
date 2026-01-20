@@ -3,10 +3,60 @@
 # macOS Setup Script
 # Bootstraps a new macOS machine with development tools and AI coding assistants
 #
+# Usage:
+#   ./macos-setup.sh              # Full install (software + aliases)
+#   ./macos-setup.sh --aliases    # Only update shell aliases/commands
+#   ./macos-setup.sh --software   # Only install/update software
+#   ./macos-setup.sh --help       # Show help
+#
 
 set -e  # Exit on error
 
-SETUP_TYPE=""  # Will be set to "docker" or "local"
+# Mode flags
+INSTALL_SOFTWARE=false
+INSTALL_ALIASES=false
+
+# Parse arguments
+if [ $# -eq 0 ]; then
+    # No arguments = do everything
+    INSTALL_SOFTWARE=true
+    INSTALL_ALIASES=true
+else
+    for arg in "$@"; do
+        case $arg in
+            --aliases|-a)
+                INSTALL_ALIASES=true
+                ;;
+            --software|-s)
+                INSTALL_SOFTWARE=true
+                ;;
+            --all)
+                INSTALL_SOFTWARE=true
+                INSTALL_ALIASES=true
+                ;;
+            --help|-h)
+                echo "macOS Setup Script"
+                echo ""
+                echo "Usage:"
+                echo "  ./macos-setup.sh              Full install (software + aliases)"
+                echo "  ./macos-setup.sh --aliases    Only update shell aliases/commands"
+                echo "  ./macos-setup.sh --software   Only install/update software"
+                echo "  ./macos-setup.sh --all        Same as no arguments"
+                echo "  ./macos-setup.sh --help       Show this help"
+                echo ""
+                echo "Short flags: -a (aliases), -s (software), -h (help)"
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: $arg"
+                echo "Use --help for usage information"
+                exit 1
+                ;;
+        esac
+    done
+fi
+
+SETUP_TYPE=""  # Will be set to "docker", "local", or "both"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ORG="palpito-hunch"
 TEMPLATES_DIR="$HOME/.templates"
@@ -16,6 +66,8 @@ PLIST_NAME="com.palpito.ai-rules-update.plist"
 
 echo "🚀 Setting up macOS development environment..."
 echo ""
+
+if [ "$INSTALL_SOFTWARE" = true ]; then
 
 # =============================================================================
 # Xcode Command Line Tools
@@ -52,53 +104,55 @@ fi
 # =============================================================================
 # Setup Type Selection
 # =============================================================================
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Choose your development environment setup:"
-echo ""
-echo "  [1] Docker (Recommended)"
-echo "      • Best for Apple Silicon (M1/M2/M3) with 16GB+ RAM"
-echo "      • Best for Intel Macs with 32GB+ RAM"
-echo "      • Isolated, consistent environments"
-echo ""
-echo "  [2] Local"
-echo "      • Best for Intel Macs with 8-16GB RAM"
-echo "      • Lower resource usage (~35-65 MB vs ~2 GB)"
-echo "      • Better performance on limited hardware"
-echo ""
-echo "  [3] Both"
-echo "      • Install Docker Desktop AND local PostgreSQL/Redis"
-echo "      • Maximum flexibility"
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
+if [ "$INSTALL_SOFTWARE" = true ]; then
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Choose your development environment setup:"
+    echo ""
+    echo "  [1] Docker (Recommended)"
+    echo "      • Best for Apple Silicon (M1/M2/M3) with 16GB+ RAM"
+    echo "      • Best for Intel Macs with 32GB+ RAM"
+    echo "      • Isolated, consistent environments"
+    echo ""
+    echo "  [2] Local"
+    echo "      • Best for Intel Macs with 8-16GB RAM"
+    echo "      • Lower resource usage (~35-65 MB vs ~2 GB)"
+    echo "      • Better performance on limited hardware"
+    echo ""
+    echo "  [3] Both"
+    echo "      • Install Docker Desktop AND local PostgreSQL/Redis"
+    echo "      • Maximum flexibility"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
 
-while true; do
-    read -p "Enter your choice [1/2/3]: " choice
-    case $choice in
-        1)
-            SETUP_TYPE="docker"
-            echo ""
-            echo "✅ Selected: Docker setup"
-            break
-            ;;
-        2)
-            SETUP_TYPE="local"
-            echo ""
-            echo "✅ Selected: Local setup"
-            break
-            ;;
-        3)
-            SETUP_TYPE="both"
-            echo ""
-            echo "✅ Selected: Both Docker and Local"
-            break
-            ;;
-        *)
-            echo "Please enter 1, 2, or 3"
-            ;;
-    esac
-done
+    while true; do
+        read -p "Enter your choice [1/2/3]: " choice
+        case $choice in
+            1)
+                SETUP_TYPE="docker"
+                echo ""
+                echo "✅ Selected: Docker setup"
+                break
+                ;;
+            2)
+                SETUP_TYPE="local"
+                echo ""
+                echo "✅ Selected: Local setup"
+                break
+                ;;
+            3)
+                SETUP_TYPE="both"
+                echo ""
+                echo "✅ Selected: Both Docker and Local"
+                break
+                ;;
+            *)
+                echo "Please enter 1, 2, or 3"
+                ;;
+        esac
+    done
+fi
 
 # =============================================================================
 # CLI Tools via Homebrew
@@ -211,10 +265,12 @@ if [ "$SETUP_TYPE" = "local" ] || [ "$SETUP_TYPE" = "both" ]; then
     echo "✅ PostgreSQL and Redis services started"
 fi
 
+fi  # End INSTALL_SOFTWARE
+
 # =============================================================================
-# Service Control Scripts
+# Service Control Scripts (Aliases)
 # =============================================================================
-if [ "$SETUP_TYPE" = "local" ] || [ "$SETUP_TYPE" = "both" ]; then
+if [ "$INSTALL_ALIASES" = true ]; then
     echo ""
     echo "📦 Installing service control scripts..."
 
@@ -251,7 +307,9 @@ if [ "$SETUP_TYPE" = "local" ] || [ "$SETUP_TYPE" = "both" ]; then
     fi
 
     echo "✅ Service control scripts installed (run 'services_help' for commands)"
-fi
+fi  # End INSTALL_ALIASES
+
+if [ "$INSTALL_SOFTWARE" = true ]; then
 
 # =============================================================================
 # Claude CLI
@@ -375,49 +433,60 @@ else
     echo "✅ Launchd agent already loaded or updated"
 fi
 
+fi  # End INSTALL_SOFTWARE (second block)
+
 # =============================================================================
 # Summary
 # =============================================================================
 echo ""
 echo "=============================================="
-echo "✨ macOS development environment setup complete!"
+echo "✨ Setup complete!"
 echo "=============================================="
 echo ""
-echo "Installed:"
-echo "  • Xcode Command Line Tools"
-echo "  • Homebrew"
-echo "  • CLI tools: git, gh, node, npm"
-echo "  • Apps: Sublime Text, Slack, MacDown, Kiro"
-echo "  • Claude CLI"
-if [ "$SETUP_TYPE" = "docker" ] || [ "$SETUP_TYPE" = "both" ]; then
-    echo "  • Docker Desktop"
+
+if [ "$INSTALL_SOFTWARE" = true ]; then
+    echo "Software installed:"
+    echo "  • Xcode Command Line Tools"
+    echo "  • Homebrew"
+    echo "  • CLI tools: git, gh, node, npm"
+    echo "  • Apps: Sublime Text, Slack, MacDown, Kiro"
+    echo "  • Claude CLI"
+    if [ "$SETUP_TYPE" = "docker" ] || [ "$SETUP_TYPE" = "both" ]; then
+        echo "  • Docker Desktop"
+    fi
+    if [ "$SETUP_TYPE" = "local" ] || [ "$SETUP_TYPE" = "both" ]; then
+        echo "  • PostgreSQL 16 (running as service)"
+        echo "  • Redis (running as service)"
+    fi
+    echo ""
+    echo "Cloned repositories:"
+    echo "  • ai-rules -> $AI_RULES_DIR"
+    echo "  • backend-template -> $TEMPLATES_DIR/backend-template"
+    echo "  • frontend-template -> $TEMPLATES_DIR/frontend-template"
+    echo ""
+    echo "Auto-update:"
+    echo "  • ai-rules will auto-update on login and every hour"
+    echo "  • Logs: $AI_RULES_DIR/.git-pull.log"
+    echo ""
 fi
-if [ "$SETUP_TYPE" = "local" ] || [ "$SETUP_TYPE" = "both" ]; then
-    echo "  • PostgreSQL 16 (running as service)"
-    echo "  • Redis (running as service)"
-    echo "  • Service control scripts (~/.dev-services.sh)"
+
+if [ "$INSTALL_ALIASES" = true ]; then
+    echo "Shell commands installed:"
+    echo "  • ~/.dev-services.sh (sourced in shell config)"
+    echo "  • Run 'services_help' to see all commands"
+    echo ""
 fi
-echo ""
-echo "Cloned repositories:"
-echo "  • ai-rules -> $AI_RULES_DIR"
-echo "  • backend-template -> $TEMPLATES_DIR/backend-template"
-echo "  • frontend-template -> $TEMPLATES_DIR/frontend-template"
-echo ""
-echo "Auto-update:"
-echo "  • ai-rules will auto-update on login and every hour"
-echo "  • Logs: $AI_RULES_DIR/.git-pull.log"
-echo ""
+
 echo "Next steps:"
-echo "  1. Restart your terminal to ensure PATH updates take effect"
-echo "  2. Run 'claude' to start using Claude Code"
-if [ "$SETUP_TYPE" = "docker" ]; then
-    echo "  3. Start Docker Desktop from Applications"
-    echo "  4. Clone your project and run 'npm run docker:up'"
-elif [ "$SETUP_TYPE" = "local" ]; then
-    echo "  3. Run 'services_help' to see service control commands"
-    echo "  4. Clone your project and configure .env with local connection strings"
-elif [ "$SETUP_TYPE" = "both" ]; then
-    echo "  3. Start Docker Desktop from Applications (for Docker workflow)"
-    echo "  4. Run 'services_help' to see local service control commands"
+echo "  1. Restart your terminal to load new commands"
+if [ "$INSTALL_SOFTWARE" = true ]; then
+    echo "  2. Run 'claude' to start using Claude Code"
+    if [ "$SETUP_TYPE" = "docker" ]; then
+        echo "  3. Start Docker Desktop from Applications"
+    elif [ "$SETUP_TYPE" = "local" ]; then
+        echo "  3. Run 'services_help' to see service control commands"
+    elif [ "$SETUP_TYPE" = "both" ]; then
+        echo "  3. Start Docker Desktop or use 'services_help' for local services"
+    fi
 fi
 echo ""
