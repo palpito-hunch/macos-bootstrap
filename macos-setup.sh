@@ -12,9 +12,6 @@
 #   ./macos-setup.sh --software   # Only install/update software
 #   ./macos-setup.sh --help       # Show help
 #
-# For piped execution (curl | bash), you must specify the environment:
-#   curl -fsSL <url> | bash -s -- --docker
-#
 
 set -e  # Exit on error
 
@@ -70,9 +67,6 @@ else
                 echo "  ./macos-setup.sh --help       Show this help"
                 echo ""
                 echo "Short flags: -a (aliases), -s (software), -h (help)"
-                echo ""
-                echo "For piped execution:"
-                echo "  curl -fsSL <url> | bash -s -- --docker"
                 exit 0
                 ;;
             *)
@@ -92,62 +86,17 @@ LAUNCH_AGENTS_DIR="$HOME/Library/LaunchAgents"
 PLIST_NAME="com.palpito.ai-rules-update.plist"
 
 # =============================================================================
-# Check for non-interactive mode (piped execution)
-# =============================================================================
-if [ "$INSTALL_SOFTWARE" = true ] && [ -z "$SETUP_TYPE" ]; then
-    if [ ! -t 0 ]; then
-        # stdin is not a terminal (piped execution)
-        echo "❌ Error: Running in non-interactive mode without specifying environment type."
-        echo ""
-        echo "When running via curl | bash, you must specify the environment:"
-        echo "  curl -fsSL <url> | bash -s -- --docker"
-        echo "  curl -fsSL <url> | bash -s -- --local"
-        echo "  curl -fsSL <url> | bash -s -- --both"
-        echo ""
-        exit 1
-    fi
-fi
-
-# =============================================================================
-# Helper: Check if TTY is available and usable
-# =============================================================================
-has_tty() {
-    # Check if stdin is a terminal
-    [ -t 0 ] && return 0
-    # Check if /dev/tty is usable (not just exists)
-    [ -c /dev/tty ] && [ -r /dev/tty ] && [ -w /dev/tty ] 2>/dev/null && return 0
-    return 1
-}
-
-# =============================================================================
 # Prompt for sudo upfront (some cask installs may need it)
 # =============================================================================
 if [ "$INSTALL_SOFTWARE" = true ]; then
     echo "🔐 Some installations may require administrator privileges."
     echo "   You may be prompted for your password."
     echo ""
-    # Try to get sudo credentials
-    if [ -t 0 ]; then
-        # stdin is a terminal, use it directly
-        sudo -v
-    elif [ -c /dev/tty ] && (: > /dev/tty) 2>/dev/null; then
-        # /dev/tty is usable
-        sudo -v < /dev/tty 2>/dev/null
-    else
-        # No TTY available - try non-interactive sudo or skip
-        echo "⚠️  No TTY available for interactive prompts."
-        echo "   Attempting non-interactive sudo (may fail if password required)..."
-        if ! sudo -n true 2>/dev/null; then
-            echo "⚠️  Sudo requires password but no TTY available."
-            echo "   Some installations may fail. Run script directly from terminal."
-        fi
-    fi
-    # Keep sudo alive in background (if we got credentials)
-    if sudo -n true 2>/dev/null; then
-        while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
-        SUDO_KEEPALIVE_PID=$!
-        trap "kill $SUDO_KEEPALIVE_PID 2>/dev/null" EXIT
-    fi
+    sudo -v
+    # Keep sudo alive in background
+    (while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done) 2>/dev/null &
+    SUDO_KEEPALIVE_PID=$!
+    trap "kill $SUDO_KEEPALIVE_PID 2>/dev/null" EXIT
 fi
 
 echo "🚀 Setting up macOS development environment..."
@@ -176,15 +125,7 @@ echo ""
 echo "📦 Checking Homebrew..."
 if ! command -v brew &> /dev/null; then
     echo "   Installing Homebrew..."
-    # Use /dev/tty for interactive input (Homebrew install script prompts for confirmation)
-    if [ -t 0 ]; then
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    elif [ -c /dev/tty ] && (: > /dev/tty) 2>/dev/null; then
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" < /dev/tty
-    else
-        # Non-interactive install
-        NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    fi
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
     # Add Homebrew to PATH for Apple Silicon Macs
     if [[ $(uname -m) == "arm64" ]]; then
@@ -425,16 +366,8 @@ fi
 echo ""
 echo "📦 Checking GitHub CLI authentication..."
 if ! gh auth status &> /dev/null 2>&1; then
-    if [ -t 0 ]; then
-        echo "   Please authenticate with GitHub:"
-        gh auth login
-    elif [ -c /dev/tty ] && (: > /dev/tty) 2>/dev/null; then
-        echo "   Please authenticate with GitHub:"
-        gh auth login < /dev/tty
-    else
-        echo "⚠️  GitHub CLI not authenticated and no TTY available."
-        echo "   Run 'gh auth login' manually after setup completes."
-    fi
+    echo "   Please authenticate with GitHub:"
+    gh auth login
 else
     echo "✅ GitHub CLI already authenticated"
 fi
