@@ -4,10 +4,16 @@
 # Bootstraps a new macOS machine with development tools and AI coding assistants
 #
 # Usage:
-#   ./macos-setup.sh              # Full install (software + aliases)
+#   ./macos-setup.sh              # Full install (interactive)
+#   ./macos-setup.sh --docker     # Full install with Docker
+#   ./macos-setup.sh --local      # Full install with local services
+#   ./macos-setup.sh --both       # Full install with Docker + local
 #   ./macos-setup.sh --aliases    # Only update shell aliases/commands
 #   ./macos-setup.sh --software   # Only install/update software
 #   ./macos-setup.sh --help       # Show help
+#
+# For piped execution (curl | bash), you must specify the environment:
+#   curl -fsSL <url> | bash -s -- --docker
 #
 
 set -e  # Exit on error
@@ -15,6 +21,7 @@ set -e  # Exit on error
 # Mode flags
 INSTALL_SOFTWARE=false
 INSTALL_ALIASES=false
+SETUP_TYPE=""  # Will be set to "docker", "local", or "both"
 
 # Parse arguments
 if [ $# -eq 0 ]; then
@@ -30,6 +37,21 @@ else
             --software|-s)
                 INSTALL_SOFTWARE=true
                 ;;
+            --docker)
+                SETUP_TYPE="docker"
+                INSTALL_SOFTWARE=true
+                INSTALL_ALIASES=true
+                ;;
+            --local)
+                SETUP_TYPE="local"
+                INSTALL_SOFTWARE=true
+                INSTALL_ALIASES=true
+                ;;
+            --both)
+                SETUP_TYPE="both"
+                INSTALL_SOFTWARE=true
+                INSTALL_ALIASES=true
+                ;;
             --all)
                 INSTALL_SOFTWARE=true
                 INSTALL_ALIASES=true
@@ -38,13 +60,19 @@ else
                 echo "macOS Setup Script"
                 echo ""
                 echo "Usage:"
-                echo "  ./macos-setup.sh              Full install (software + aliases)"
+                echo "  ./macos-setup.sh              Full install (interactive prompt)"
+                echo "  ./macos-setup.sh --docker     Full install with Docker"
+                echo "  ./macos-setup.sh --local      Full install with local PostgreSQL/Redis"
+                echo "  ./macos-setup.sh --both       Full install with Docker + local services"
                 echo "  ./macos-setup.sh --aliases    Only update shell aliases/commands"
                 echo "  ./macos-setup.sh --software   Only install/update software"
-                echo "  ./macos-setup.sh --all        Same as no arguments"
+                echo "  ./macos-setup.sh --all        Same as no arguments (interactive)"
                 echo "  ./macos-setup.sh --help       Show this help"
                 echo ""
                 echo "Short flags: -a (aliases), -s (software), -h (help)"
+                echo ""
+                echo "For piped execution:"
+                echo "  curl -fsSL <url> | bash -s -- --docker"
                 exit 0
                 ;;
             *)
@@ -56,13 +84,48 @@ else
     done
 fi
 
-SETUP_TYPE=""  # Will be set to "docker", "local", or "both"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ORG="palpito-hunch"
 TEMPLATES_DIR="$HOME/.templates"
 AI_RULES_DIR="$HOME/.ai-rules"
 LAUNCH_AGENTS_DIR="$HOME/Library/LaunchAgents"
 PLIST_NAME="com.palpito.ai-rules-update.plist"
+
+# =============================================================================
+# Check for non-interactive mode (piped execution)
+# =============================================================================
+if [ "$INSTALL_SOFTWARE" = true ] && [ -z "$SETUP_TYPE" ]; then
+    if [ ! -t 0 ]; then
+        # stdin is not a terminal (piped execution)
+        echo "❌ Error: Running in non-interactive mode without specifying environment type."
+        echo ""
+        echo "When running via curl | bash, you must specify the environment:"
+        echo "  curl -fsSL <url> | bash -s -- --docker"
+        echo "  curl -fsSL <url> | bash -s -- --local"
+        echo "  curl -fsSL <url> | bash -s -- --both"
+        echo ""
+        exit 1
+    fi
+fi
+
+# =============================================================================
+# Prompt for sudo upfront (some cask installs may need it)
+# =============================================================================
+if [ "$INSTALL_SOFTWARE" = true ]; then
+    echo "🔐 Some installations may require administrator privileges."
+    echo "   You may be prompted for your password."
+    echo ""
+    # Read from /dev/tty to work with piped execution
+    if [ -t 0 ]; then
+        sudo -v
+    else
+        sudo -v < /dev/tty
+    fi
+    # Keep sudo alive in background
+    while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+    SUDO_KEEPALIVE_PID=$!
+    trap "kill $SUDO_KEEPALIVE_PID 2>/dev/null" EXIT
+fi
 
 echo "🚀 Setting up macOS development environment..."
 echo ""
@@ -90,7 +153,8 @@ echo ""
 echo "📦 Checking Homebrew..."
 if ! command -v brew &> /dev/null; then
     echo "   Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    # Use /dev/tty for interactive input (Homebrew install script prompts for confirmation)
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" < /dev/tty
 
     # Add Homebrew to PATH for Apple Silicon Macs
     if [[ $(uname -m) == "arm64" ]]; then
@@ -102,9 +166,9 @@ else
 fi
 
 # =============================================================================
-# Setup Type Selection
+# Setup Type Selection (only if not set via argument)
 # =============================================================================
-if [ "$INSTALL_SOFTWARE" = true ]; then
+if [ "$INSTALL_SOFTWARE" = true ] && [ -z "$SETUP_TYPE" ]; then
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "Choose your development environment setup:"
@@ -152,6 +216,8 @@ if [ "$INSTALL_SOFTWARE" = true ]; then
                 ;;
         esac
     done
+elif [ -n "$SETUP_TYPE" ]; then
+    echo "✅ Environment: $SETUP_TYPE (from command line)"
 fi
 
 # =============================================================================
@@ -330,7 +396,8 @@ echo ""
 echo "📦 Checking GitHub CLI authentication..."
 if ! gh auth status &> /dev/null 2>&1; then
     echo "   Please authenticate with GitHub:"
-    gh auth login
+    # Use /dev/tty for interactive input (works with piped execution)
+    gh auth login < /dev/tty
 else
     echo "✅ GitHub CLI already authenticated"
 fi
