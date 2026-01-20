@@ -5,17 +5,33 @@ Bootstrap a new macOS machine with development tools and AI coding assistants.
 ## Quick Start
 
 ```bash
-# Full install (software + shell commands)
 curl -fsSL https://raw.githubusercontent.com/palpito-hunch/development-environment-setup/main/macos-setup.sh | bash
-
-# Update only shell commands/aliases
-curl -fsSL https://raw.githubusercontent.com/palpito-hunch/development-environment-setup/main/macos-setup.sh | bash -s -- --aliases
-
-# Install only software (no shell commands)
-curl -fsSL https://raw.githubusercontent.com/palpito-hunch/development-environment-setup/main/macos-setup.sh | bash -s -- --software
 ```
 
-## What It Does
+## Script Options
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| (none) | | Full install: software + shell commands |
+| `--software` | `-s` | Install/update software only |
+| `--aliases` | `-a` | Update shell commands only |
+| `--all` | | Same as no flags |
+| `--help` | `-h` | Show usage |
+
+```bash
+# Full install (new machine)
+curl -fsSL .../macos-setup.sh | bash
+
+# Update shell commands only (when dev-services.sh changes)
+curl -fsSL .../macos-setup.sh | bash -s -- --aliases
+
+# Install software only (skip shell config)
+curl -fsSL .../macos-setup.sh | bash -s -- --software
+```
+
+## What Gets Installed
+
+### Software (--software)
 
 The script prompts you to choose a setup type:
 
@@ -34,48 +50,38 @@ All options install:
 | **AI Assistants** | Claude Code |
 | **Org Setup** | ai-rules, backend-template, frontend-template |
 
-## Shell Commands
+### Shell Commands (--aliases)
 
-The script installs shell functions to `~/.dev-services.sh`:
+Installs `~/.dev-services.sh` and sources it in your shell config.
+
+## Shell Commands Reference
 
 ### Project Creation
 
 ```bash
-# Create a new backend project from template
-new_backend my-api
-
-# Create a new frontend project from template
-new_frontend my-app
+new_backend my-api      # Create backend from template
+new_frontend my-app     # Create frontend from template
 ```
 
-Projects are created as private repos in the `palpito-hunch` org using GitHub's template feature.
+Creates private repos in `palpito-hunch` org using GitHub's template feature.
 
 ### Service Controls
 
 ```bash
 # PostgreSQL
-pg_start          # Start PostgreSQL
-pg_stop           # Stop PostgreSQL
-pg_restart        # Restart PostgreSQL
-pg_status         # Check status
+pg_start              pg_stop              pg_restart           pg_status
 
 # Redis
-redis_start       # Start Redis
-redis_stop        # Stop Redis
-redis_restart     # Restart Redis
-redis_status      # Check status
+redis_start           redis_stop           redis_restart        redis_status
 
 # Docker
-docker_start      # Start Docker Desktop
-docker_stop       # Stop Docker Desktop
+docker_start          docker_stop
 
 # All Local Services
-services_start    # Start PostgreSQL and Redis
-services_stop     # Stop PostgreSQL and Redis
-services_restart  # Restart all
-services_status   # Check all status
+services_start        services_stop        services_restart     services_status
 
-services_help     # Show all commands
+# Help
+services_help
 ```
 
 ## Troubleshooting
@@ -83,54 +89,40 @@ services_help     # Show all commands
 ### Docker
 
 ```bash
-# Check if Docker is running
-docker info
-
-# Start Docker Desktop
-docker_start
-# or: open -a Docker
+docker info           # Check if running
+docker_start          # Start Docker Desktop
 ```
 
 ### PostgreSQL
 
 ```bash
-# Check status
-pg_status
-
-# Restart
-pg_restart
-
-# View logs
-tail -f /opt/homebrew/var/log/postgresql@16.log
+pg_status             # Check status
+pg_restart            # Restart service
+tail -f /opt/homebrew/var/log/postgresql@16.log  # View logs
 ```
 
 ### Redis
 
 ```bash
-# Check status
-redis_status
-
-# Restart
-redis_restart
-
-# Test connection
-redis-cli ping
+redis_status          # Check status
+redis_restart         # Restart service
+redis-cli ping        # Test connection
 ```
 
 ### Port Conflicts
 
 ```bash
-# Check what's using a port
-lsof -i :5432    # PostgreSQL
-lsof -i :6379    # Redis
-
-# Kill process
-kill -9 <PID>
+lsof -i :5432         # What's using PostgreSQL port
+lsof -i :6379         # What's using Redis port
+kill -9 <PID>         # Kill process
 ```
 
-## Re-running the Script
+## Updating
 
-The script is idempotent and can be safely re-run to:
-- Install missing tools
-- Update to a different setup type
-- Fix broken installations
+```bash
+# Update shell commands when new features are added
+curl -fsSL .../macos-setup.sh | bash -s -- --aliases
+
+# Full re-run (idempotent, safe to repeat)
+curl -fsSL .../macos-setup.sh | bash
+```
