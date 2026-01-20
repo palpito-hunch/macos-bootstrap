@@ -7,6 +7,7 @@
 set -e  # Exit on error
 
 SETUP_TYPE=""  # Will be set to "docker" or "local"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ORG="palpito-hunch"
 TEMPLATES_DIR="$HOME/.templates"
 AI_RULES_DIR="$HOME/.ai-rules"
@@ -211,6 +212,48 @@ if [ "$SETUP_TYPE" = "local" ] || [ "$SETUP_TYPE" = "both" ]; then
 fi
 
 # =============================================================================
+# Service Control Scripts
+# =============================================================================
+if [ "$SETUP_TYPE" = "local" ] || [ "$SETUP_TYPE" = "both" ]; then
+    echo ""
+    echo "📦 Installing service control scripts..."
+
+    DEV_SERVICES_SRC="$SCRIPT_DIR/dev-services.sh"
+    DEV_SERVICES_DEST="$HOME/.dev-services.sh"
+
+    # Copy dev-services.sh to home directory
+    if [ -f "$DEV_SERVICES_SRC" ]; then
+        cp "$DEV_SERVICES_SRC" "$DEV_SERVICES_DEST"
+        echo "   Copied dev-services.sh to $DEV_SERVICES_DEST"
+    else
+        # If running via curl, download the file
+        echo "   Downloading dev-services.sh..."
+        curl -fsSL https://raw.githubusercontent.com/palpito-hunch/development-environment-setup/main/dev-services.sh -o "$DEV_SERVICES_DEST" || echo "⚠️  Failed to download dev-services.sh, continuing..."
+    fi
+
+    # Add source line to shell config if not present
+    SHELL_CONFIG=""
+    if [ -f "$HOME/.zshrc" ]; then
+        SHELL_CONFIG="$HOME/.zshrc"
+    elif [ -f "$HOME/.bashrc" ]; then
+        SHELL_CONFIG="$HOME/.bashrc"
+    fi
+
+    if [ -n "$SHELL_CONFIG" ] && [ -f "$DEV_SERVICES_DEST" ]; then
+        if ! grep -q "source.*\.dev-services\.sh" "$SHELL_CONFIG" 2>/dev/null; then
+            echo "" >> "$SHELL_CONFIG"
+            echo "# Development service controls" >> "$SHELL_CONFIG"
+            echo "source \"\$HOME/.dev-services.sh\"" >> "$SHELL_CONFIG"
+            echo "   Added source line to $SHELL_CONFIG"
+        else
+            echo "✅ Shell config already sources dev-services.sh"
+        fi
+    fi
+
+    echo "✅ Service control scripts installed (run 'services_help' for commands)"
+fi
+
+# =============================================================================
 # Claude CLI
 # =============================================================================
 echo ""
@@ -352,6 +395,7 @@ fi
 if [ "$SETUP_TYPE" = "local" ] || [ "$SETUP_TYPE" = "both" ]; then
     echo "  • PostgreSQL 16 (running as service)"
     echo "  • Redis (running as service)"
+    echo "  • Service control scripts (~/.dev-services.sh)"
 fi
 echo ""
 echo "Cloned repositories:"
@@ -370,10 +414,10 @@ if [ "$SETUP_TYPE" = "docker" ]; then
     echo "  3. Start Docker Desktop from Applications"
     echo "  4. Clone your project and run 'npm run docker:up'"
 elif [ "$SETUP_TYPE" = "local" ]; then
-    echo "  3. Clone your project and configure .env with local connection strings"
-    echo "  4. Run 'npm install && npm run db:push'"
+    echo "  3. Run 'services_help' to see service control commands"
+    echo "  4. Clone your project and configure .env with local connection strings"
 elif [ "$SETUP_TYPE" = "both" ]; then
     echo "  3. Start Docker Desktop from Applications (for Docker workflow)"
-    echo "  4. Clone your project and choose Docker or Local in your .env"
+    echo "  4. Run 'services_help' to see local service control commands"
 fi
 echo ""
