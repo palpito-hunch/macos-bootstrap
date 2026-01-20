@@ -68,6 +68,14 @@ for tool in "${CLI_TOOLS[@]}"; do
     fi
 done
 
+# Verify npm is available (bundled with node)
+if command -v npm &> /dev/null; then
+    echo "✅ npm already installed (bundled with node)"
+else
+    echo "⚠️  npm not found - reinstalling node..."
+    brew reinstall node
+fi
+
 # =============================================================================
 # Cask Applications
 # =============================================================================
@@ -218,7 +226,7 @@ echo ""
 echo "Installed:"
 echo "  • Xcode Command Line Tools"
 echo "  • Homebrew"
-echo "  • CLI tools: git, gh, node"
+echo "  • CLI tools: git, gh, node, npm"
 echo "  • Apps: Sublime Text, Slack, MacDown, Kiro"
 echo "  • Claude CLI"
 echo ""
