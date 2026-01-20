@@ -6,6 +6,7 @@
 
 set -e  # Exit on error
 
+SETUP_TYPE=""  # Will be set to "docker" or "local"
 ORG="palpito-hunch"
 TEMPLATES_DIR="$HOME/.templates"
 AI_RULES_DIR="$HOME/.ai-rules"
@@ -46,6 +47,47 @@ if ! command -v brew &> /dev/null; then
 else
     echo "✅ Homebrew already installed"
 fi
+
+# =============================================================================
+# Setup Type Selection
+# =============================================================================
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Choose your development environment setup:"
+echo ""
+echo "  [1] Docker (Recommended)"
+echo "      • Best for Apple Silicon (M1/M2/M3) with 16GB+ RAM"
+echo "      • Best for Intel Macs with 32GB+ RAM"
+echo "      • Isolated, consistent environments"
+echo ""
+echo "  [2] Local"
+echo "      • Best for Intel Macs with 8-16GB RAM"
+echo "      • Lower resource usage (~35-65 MB vs ~2 GB)"
+echo "      • Better performance on limited hardware"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+while true; do
+    read -p "Enter your choice [1/2]: " choice
+    case $choice in
+        1)
+            SETUP_TYPE="docker"
+            echo ""
+            echo "✅ Selected: Docker setup"
+            break
+            ;;
+        2)
+            SETUP_TYPE="local"
+            echo ""
+            echo "✅ Selected: Local setup"
+            break
+            ;;
+        *)
+            echo "Please enter 1 or 2"
+            ;;
+    esac
+done
 
 # =============================================================================
 # CLI Tools via Homebrew
@@ -101,6 +143,57 @@ for app in "${CASK_APPS[@]}"; do
         fi
     fi
 done
+
+# =============================================================================
+# Development Environment (Docker or Local)
+# =============================================================================
+echo ""
+if [ "$SETUP_TYPE" = "docker" ]; then
+    echo "📦 Setting up Docker environment..."
+
+    if brew list --cask docker &> /dev/null 2>&1; then
+        echo "✅ Docker Desktop already installed"
+    else
+        echo "   Installing Docker Desktop..."
+        if ! brew install --cask docker 2>&1; then
+            echo "⚠️  Failed to install Docker Desktop (may already be installed outside Homebrew), continuing..."
+        fi
+    fi
+
+    echo ""
+    echo "ℹ️  After setup, start Docker Desktop from Applications"
+    echo "   Then use 'npm run docker:up' in your project to start services"
+
+elif [ "$SETUP_TYPE" = "local" ]; then
+    echo "📦 Setting up local environment..."
+
+    # Install PostgreSQL 16
+    if brew list postgresql@16 &> /dev/null 2>&1; then
+        echo "✅ PostgreSQL 16 already installed"
+    else
+        echo "   Installing PostgreSQL 16..."
+        brew install postgresql@16 || echo "⚠️  Failed to install PostgreSQL 16, continuing..."
+    fi
+
+    # Start PostgreSQL service
+    echo "   Starting PostgreSQL service..."
+    brew services start postgresql@16 2>/dev/null || echo "✅ PostgreSQL service already running"
+
+    # Install Redis
+    if brew list redis &> /dev/null 2>&1; then
+        echo "✅ Redis already installed"
+    else
+        echo "   Installing Redis..."
+        brew install redis || echo "⚠️  Failed to install Redis, continuing..."
+    fi
+
+    # Start Redis service
+    echo "   Starting Redis service..."
+    brew services start redis 2>/dev/null || echo "✅ Redis service already running"
+
+    echo ""
+    echo "✅ PostgreSQL and Redis services started"
+fi
 
 # =============================================================================
 # Claude CLI
@@ -238,6 +331,12 @@ echo "  • Homebrew"
 echo "  • CLI tools: git, gh, node, npm"
 echo "  • Apps: Sublime Text, Slack, MacDown, Kiro"
 echo "  • Claude CLI"
+if [ "$SETUP_TYPE" = "docker" ]; then
+    echo "  • Docker Desktop"
+elif [ "$SETUP_TYPE" = "local" ]; then
+    echo "  • PostgreSQL 16 (running as service)"
+    echo "  • Redis (running as service)"
+fi
 echo ""
 echo "Cloned repositories:"
 echo "  • ai-rules -> $AI_RULES_DIR"
@@ -251,4 +350,11 @@ echo ""
 echo "Next steps:"
 echo "  1. Restart your terminal to ensure PATH updates take effect"
 echo "  2. Run 'claude' to start using Claude Code"
+if [ "$SETUP_TYPE" = "docker" ]; then
+    echo "  3. Start Docker Desktop from Applications"
+    echo "  4. Clone your project and run 'npm run docker:up'"
+elif [ "$SETUP_TYPE" = "local" ]; then
+    echo "  3. Clone your project and configure .env with local connection strings"
+    echo "  4. Run 'npm install && npm run db:push'"
+fi
 echo ""
