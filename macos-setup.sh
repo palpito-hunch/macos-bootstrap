@@ -109,26 +109,45 @@ if [ "$INSTALL_SOFTWARE" = true ] && [ -z "$SETUP_TYPE" ]; then
 fi
 
 # =============================================================================
+# Helper: Check if TTY is available and usable
+# =============================================================================
+has_tty() {
+    # Check if stdin is a terminal
+    [ -t 0 ] && return 0
+    # Check if /dev/tty is usable (not just exists)
+    [ -c /dev/tty ] && [ -r /dev/tty ] && [ -w /dev/tty ] 2>/dev/null && return 0
+    return 1
+}
+
+# =============================================================================
 # Prompt for sudo upfront (some cask installs may need it)
 # =============================================================================
 if [ "$INSTALL_SOFTWARE" = true ]; then
     echo "🔐 Some installations may require administrator privileges."
     echo "   You may be prompted for your password."
     echo ""
-    # Read from /dev/tty to work with piped execution
+    # Try to get sudo credentials
     if [ -t 0 ]; then
+        # stdin is a terminal, use it directly
         sudo -v
-    elif [ -e /dev/tty ]; then
+    elif [ -c /dev/tty ] && (echo "" > /dev/tty) 2>/dev/null; then
+        # /dev/tty is usable
         sudo -v < /dev/tty
     else
-        echo "⚠️  No TTY available - sudo prompts may fail."
-        echo "   If installation fails, run the script directly from a terminal."
-        sudo -v 2>/dev/null || true
+        # No TTY available - try non-interactive sudo or skip
+        echo "⚠️  No TTY available for interactive prompts."
+        echo "   Attempting non-interactive sudo (may fail if password required)..."
+        if ! sudo -n true 2>/dev/null; then
+            echo "⚠️  Sudo requires password but no TTY available."
+            echo "   Some installations may fail. Run script directly from terminal."
+        fi
     fi
-    # Keep sudo alive in background
-    while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
-    SUDO_KEEPALIVE_PID=$!
-    trap "kill $SUDO_KEEPALIVE_PID 2>/dev/null" EXIT
+    # Keep sudo alive in background (if we got credentials)
+    if sudo -n true 2>/dev/null; then
+        while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+        SUDO_KEEPALIVE_PID=$!
+        trap "kill $SUDO_KEEPALIVE_PID 2>/dev/null" EXIT
+    fi
 fi
 
 echo "🚀 Setting up macOS development environment..."
@@ -158,10 +177,12 @@ echo "📦 Checking Homebrew..."
 if ! command -v brew &> /dev/null; then
     echo "   Installing Homebrew..."
     # Use /dev/tty for interactive input (Homebrew install script prompts for confirmation)
-    if [ -e /dev/tty ]; then
+    if [ -t 0 ]; then
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    elif [ -c /dev/tty ] && (echo "" > /dev/tty) 2>/dev/null; then
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" < /dev/tty
     else
-        # Non-interactive install (may require NONINTERACTIVE=1 env var)
+        # Non-interactive install
         NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     fi
 
@@ -404,9 +425,11 @@ fi
 echo ""
 echo "📦 Checking GitHub CLI authentication..."
 if ! gh auth status &> /dev/null 2>&1; then
-    if [ -e /dev/tty ]; then
+    if [ -t 0 ]; then
         echo "   Please authenticate with GitHub:"
-        # Use /dev/tty for interactive input (works with piped execution)
+        gh auth login
+    elif [ -c /dev/tty ] && (echo "" > /dev/tty) 2>/dev/null; then
+        echo "   Please authenticate with GitHub:"
         gh auth login < /dev/tty
     else
         echo "⚠️  GitHub CLI not authenticated and no TTY available."
