@@ -51,7 +51,7 @@ All options install:
 |----------|-------|
 | **CLI Tools** | git, gh (GitHub CLI), node, npm |
 | **Applications** | Sublime Text, Slack, MacDown, Kiro |
-| **AI Assistants** | Claude Code |
+| **AI Assistants** | Claude Code, Tessl CLI |
 | **Org Setup** | ai-rules, backend-template, frontend-template |
 
 ### Shell Commands (--aliases)

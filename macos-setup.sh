@@ -361,6 +361,18 @@ else
 fi
 
 # =============================================================================
+# Tessl CLI
+# =============================================================================
+echo ""
+echo "📦 Checking Tessl CLI..."
+if command -v tessl &> /dev/null; then
+    echo "✅ Tessl CLI already installed"
+else
+    echo "   Installing Tessl CLI..."
+    npm install -g @tessl/cli || echo "⚠️  Failed to install Tessl CLI, continuing..."
+fi
+
+# =============================================================================
 # Authenticate GitHub CLI
 # =============================================================================
 echo ""
@@ -487,7 +499,7 @@ if [ "$INSTALL_SOFTWARE" = true ]; then
     echo "  • Homebrew"
     echo "  • CLI tools: git, gh, node, npm"
     echo "  • Apps: Sublime Text, Slack, MacDown, Kiro"
-    echo "  • Claude CLI"
+    echo "  • Claude CLI, Tessl CLI"
     if [ "$SETUP_TYPE" = "docker" ] || [ "$SETUP_TYPE" = "both" ]; then
         echo "  • Docker Desktop"
     fi
